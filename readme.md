@@ -1,7 +1,7 @@
 # Featurepack for the Bridge75 keyboard
 This fork aims to seamlessly add more customization options to the behavior of the Bridge75 Keyboard. 
 Current Features include:
-- Smooth Battery Light Indication (WIP)
+- Smooth Battery Light Indication
 - thats it so far ._.
 
 ## Step by Step for people unfamilliar with everything:

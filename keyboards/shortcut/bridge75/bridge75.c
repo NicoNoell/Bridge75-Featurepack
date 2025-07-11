@@ -2,9 +2,13 @@
 // Copyright 2024 Westberry Technology (ChangZhou) Corp., Ltd
 // Copyright 2024 Wind (@yelishang)
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include <stdint.h>
+#include <stdbool.h>
 
 #include QMK_KEYBOARD_H
 #include "wireless.h"
+#include "config.h"
+#include "iso/config.h"
 
 typedef union {
     uint32_t raw;
@@ -14,6 +18,10 @@ typedef union {
     };
 } confinfo_t;
 confinfo_t confinfo;
+
+typedef struct {
+    uint8_t r, g, b;
+} color_t;
 
 uint32_t post_init_timer = 0x00;
 
@@ -270,6 +278,9 @@ void blink(uint8_t key_index, uint8_t r, uint8_t g, uint8_t b, bool blink) {
 
 void connection_indicators(void) {
     switch (confinfo.devs) {
+        case DEVS_USB: {
+            rgb_matrix_set_color(DEVS_USB_INDEX, RGB_ADJ_WHITE);
+        } break;
         case DEVS_BT1: {
             if (*md_getp_state() == MD_STATE_PAIRING) {
                 blink(DEVS_BT1_INDEX, RGB_ADJ_WHITE, blink_fast);
@@ -309,6 +320,32 @@ void connection_indicators(void) {
     }
 }
 
+float lerp(float start, float end, float t){
+    return start + (end - start) * t;
+}
+
+color_t color_lerp(color_t color_start, color_t color_end, float t){
+    return (color_t){
+            (uint8_t) lerp(color_start.r, color_end.r, t),
+            (uint8_t) lerp(color_start.g, color_end.g, t),
+            (uint8_t) lerp(color_start.b, color_end.b, t)};
+}
+
+color_t calculate_battery_status_color(uint8_t bat_level){
+    color_t low_color = {RGB_ADJ_RED};
+    color_t mid_color = {RGB_ADJ_YELLOW};
+    color_t high_color = {RGB_ADJ_GREEN};
+    if (bat_level < 0) {
+        return low_color;
+    } else if (bat_level <= 50) {
+        return color_lerp(low_color, mid_color, (float)bat_level/50);
+    } else if (bat_level <= 100) {
+        return color_lerp(mid_color, high_color, ((float)bat_level - 50)/50);
+    } else {
+        return high_color;
+    }
+}
+
 bool rgb_matrix_indicators_advanced_kb(uint8_t led_min, uint8_t led_max) {
     blink_index = blink_index + 1;
     blink_fast  = (blink_index % 64 == 0) ? !blink_fast : blink_fast;
@@ -332,18 +369,27 @@ bool rgb_matrix_indicators_advanced_kb(uint8_t led_min, uint8_t led_max) {
             }
         }
 
-        // Check if we are plugged in
-        if (gpio_read_pin(BT_CABLE_PIN)) {
-            // We are plugged in
-            if (!gpio_read_pin(BT_CHARGE_PIN)) {
-                // We are charging blink red
+        bool plugged_in = gpio_read_pin(BT_CABLE_PIN);
+        bool charging = !gpio_read_pin(BT_CHARGE_PIN);
+        uint8_t bat_level = *md_getp_bat();
+        
+#ifdef SMOOTH_BATTERY_COLOR_ENABLE
+        color_t bat_color = calculate_battery_status_color(bat_level);
+
+        if (plugged_in && charging) {
+            blink(ESCAPE_INDEX, bat_color.r, bat_color.g, bat_color.b, blink_slow);
+        } else {
+            rgb_matrix_set_color(ESCAPE_INDEX, bat_color.r, bat_color.g, bat_color.b);
+        }
+#else 
+        if (plugged_in) {
+            if (charging) {
                 blink(ESCAPE_INDEX, RGB_ADJ_RED, blink_slow);
             } else {
-                // We are fully charged solid green
+                // solid green
                 rgb_matrix_set_color(ESCAPE_INDEX, RGB_ADJ_GREEN);
             }
         } else {
-            uint8_t bat_level = *md_getp_bat();
             if (bat_level > 90) {
                 rgb_matrix_set_color(ESCAPE_INDEX, RGB_ADJ_GREEN);
             } else if (bat_level > 50) {
@@ -354,6 +400,7 @@ bool rgb_matrix_indicators_advanced_kb(uint8_t led_min, uint8_t led_max) {
                 rgb_matrix_set_color(ESCAPE_INDEX, RGB_ADJ_RED);
             }
         }
+#endif
 
         // Show active connection
         connection_indicators();
