@@ -27,4 +27,4 @@ Then, you should recieve a binary named something like "shortvut_bridge75_iso_de
 -> If you prefer to have a different keymap by default, you can just add a folder in the keymaps directory and copy your new layout there. (When compiling, keep in mind to replace the :default with the name of the folder containing you custom layout, so something like :custom)
 
 ## How to Flash to the keyboard 
-For this, I recommend using [QMK Toolbox](https://qmk.fm/toolbox). All the steps should be self-explanatory.
+For this, I recommend using [QMK Toolbox](https://qmk.fm/toolbox). For bringing the Keyboard into DFU (flash) mode, [this](https://monacokeys.de/pages/bridge75-firmware-update) Website (monacokeys.de) is very helpful.
