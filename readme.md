@@ -16,7 +16,15 @@ Current Features include:
 If you look into the folder keyboards/bridge75 you will find a rules.mk. There you can choose and edit the features to your liking. Now you just need to build everything and flash it to your Keyboard :)
 
 ## How to Build the code
-bla bla bla
+When inside the project, run the following command from the terminal: 
+```
+make shortcut/bridge75/iso:default
+```
+Then, you should recieve a binary named something like "shortvut_bridge75_iso_default.bin". This is the file you ultimately flash onto your keyboard.
+
+-> If you have an ansi keyboard you can just replace the iso with ansi. 
+
+-> If you prefer to have a different keymap by default, you can just add a folder in the keymaps directory and copy your new layout there. (When compiling, keep in mind to replace the :default with the name of the folder containing you custom layout, so something like :custom)
 
 ## How to Flash to the keyboard 
-more bla bla
+For this, I recommend using [QMK Toolbox](https://qmk.fm/toolbox). All the steps should be self-explanatory.
